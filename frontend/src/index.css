@@ -289,6 +289,7 @@ input:focus, select:focus {
   justify-content: center;
   align-items: center;
   padding: 2rem;
+  color: white;
 }
 
 .winner-banner {
@@ -394,4 +395,4 @@ input:focus, select:focus {
 [data-theme="light"] .bingo-cell { background-color: #fff; color: #ddd; border: 1px solid #eee; }
 [data-theme="light"] .bingo-header { text-shadow: none; }
 [data-theme="light"] .latest-number-container { text-shadow: none; }
-[data-theme="light"] .verification-overlay { background-color: rgba(255, 255, 255, 0.95); }
+[data-theme="light"] .verification-overlay { background-color: rgba(255, 255, 255, 0.95); color: #222; }

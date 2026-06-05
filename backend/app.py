@@ -34,6 +34,7 @@ called_numbers = loaded_numbers # keep as list to preserve chronological order f
 current_pattern = loaded_pattern
 game_status = loaded_status
 global_theme = "light"
+current_verification = None
 
 cards = {}
 
@@ -80,11 +81,19 @@ def verify_card():
         
     is_winner = check_pattern(cards[card_id], set(called_numbers), pattern)
     
-    socketio.emit('show_verification', {
+    global current_verification, game_status
+    current_verification = {
         'card_id': card_id,
         'is_winner': is_winner,
         'card_data': cards[card_id]
-    })
+    }
+    
+    socketio.emit('show_verification', current_verification)
+    
+    if is_winner:
+        game_status = "finished"
+        update_status("finished")
+        emit_state()
     
     return jsonify({
         "success": True,
@@ -105,6 +114,8 @@ def handle_connect(auth=None):
     print("Client connected")
     emit_state()
     socketio.emit('theme_sync', {'theme': global_theme})
+    if current_verification:
+        socketio.emit('show_verification', current_verification)
 
 @socketio.on('set_theme')
 def handle_set_theme(data):
@@ -141,11 +152,14 @@ def handle_remove_number(data):
 
 @socketio.on('hide_verification')
 def handle_hide_verification():
+    global current_verification
+    current_verification = None
     socketio.emit('hide_verification')
 
 @socketio.on('reset_game')
 def handle_reset_game():
-    global game_status, current_pattern
+    global game_status, current_pattern, current_verification
+    current_verification = None
     called_numbers.clear()
     game_status = "waiting"
     db_reset_game(current_pattern)

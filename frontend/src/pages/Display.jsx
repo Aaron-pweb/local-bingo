@@ -131,7 +131,7 @@ export default function Display() {
         ) : (
           <h1 className="invalid-banner">❌ INVALID BINGO ❌</h1>
         )}
-        <h2 style={{ color: 'white', marginBottom: '2rem', fontSize: '3rem' }}>Card #{card_id}</h2>
+        <h2 style={{ marginBottom: '2rem', fontSize: '3rem' }}>Card #{card_id}</h2>
         <div className="verified-card-board">
           {columns.map(col => (
             <div key={col} className={`bingo-col col-${col.toLowerCase()}`}>

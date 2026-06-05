@@ -148,70 +148,76 @@ export default function CallerDashboard({ toggleTheme, theme }) {
             </div>
           </div>
 
-          <div className="card">
-            <h2>Call Number Board</h2>
-            <div className="caller-grid-container">
-              {['B', 'I', 'N', 'G', 'O'].map((letter, rowIdx) => (
-                <div key={letter} className="caller-grid-row">
-                  <div className={`caller-row-header row-${letter.toLowerCase()}`}>{letter}</div>
-                  {Array.from({ length: 15 }, (_, i) => i + 1 + (rowIdx * 15)).map(num => {
-                    const isCalled = calledNumbers.includes(num);
-                    return (
-                      <button
-                        key={num}
-                        className={`caller-btn ${isCalled ? 'called col-' + letter.toLowerCase() : ''}`}
-                        onClick={() => { if (!isCalled) socket.emit('call_number', { number: num }); }}
-                      >
-                        {num}
+          <div style={{ display: 'flex', gap: '2rem', alignItems: 'flex-start', flexWrap: 'wrap' }}>
+            <div style={{ flex: '2 1 700px' }}>
+              <div className="card">
+                <h2>Call Number Board</h2>
+                <div className="caller-grid-container">
+                  {['B', 'I', 'N', 'G', 'O'].map((letter, rowIdx) => (
+                    <div key={letter} className="caller-grid-row">
+                      <div className={`caller-row-header row-${letter.toLowerCase()}`}>{letter}</div>
+                      {Array.from({ length: 15 }, (_, i) => i + 1 + (rowIdx * 15)).map(num => {
+                        const isCalled = calledNumbers.includes(num);
+                        return (
+                          <button
+                            key={num}
+                            className={`caller-btn ${isCalled ? 'called col-' + letter.toLowerCase() : ''}`}
+                            onClick={() => { if (!isCalled) socket.emit('call_number', { number: num }); }}
+                          >
+                            {num}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div style={{ flex: '1 1 350px', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+              <div className="card">
+                <h2>Verify Card</h2>
+                <form onSubmit={handleVerify} style={{ display: 'flex', gap: '10px', marginTop: '1rem', alignItems: 'center' }}>
+                  <input
+                    type="number"
+                    placeholder="Card Number"
+                    value={verifyCardId}
+                    onChange={(e) => setVerifyCardId(e.target.value)}
+                    style={{ flex: 1 }}
+                  />
+                  <button type="submit">Verify</button>
+                </form>
+                
+                {verifyResult && (
+                  <div style={{ marginTop: '1.5rem', padding: '1rem', borderRadius: '8px', 
+                    backgroundColor: verifyResult.isWinner ? 'var(--success-bg)' : (verifyResult.error ? '#fee2e2' : '#fef2f2'),
+                    color: verifyResult.isWinner ? 'var(--success)' : 'var(--danger)',
+                    textAlign: 'center', fontWeight: 'bold', fontSize: '1.5rem',
+                    display: 'flex', flexDirection: 'column', gap: '1rem'
+                  }}>
+                    <div>{verifyResult.error ? `Error: ${verifyResult.error}` : (verifyResult.isWinner ? "🎉 WINNER! 🎉" : "❌ INVALID BINGO ❌")}</div>
+                    {!verifyResult.error && !verifyResult.isWinner && (
+                      <button onClick={closeVerification} style={{ backgroundColor: '#444', color: 'white', padding: '10px', fontSize: '1rem', alignSelf: 'center', cursor: 'pointer' }}>
+                        Close TV Verification
                       </button>
-                    );
-                  })}
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="card">
-            <h2>Called Numbers ({calledNumbers.length})</h2>
-            <div className="number-history" style={{ marginTop: '1rem' }}>
-              {calledNumbers.map(num => (
-                <div key={num} className="history-pill">
-                  {num}
-                  <button onClick={() => handleRemove(num)} title="Remove">×</button>
-                </div>
-              ))}
-              {calledNumbers.length === 0 && <span style={{ color: 'var(--border-color)' }}>No numbers called yet.</span>}
-            </div>
-          </div>
-
-          <div className="card">
-            <h2>Verify Card</h2>
-            <form onSubmit={handleVerify} style={{ display: 'flex', gap: '10px', marginTop: '1rem', alignItems: 'center' }}>
-              <input
-                type="number"
-                placeholder="Card Number (e.g., 125)"
-                value={verifyCardId}
-                onChange={(e) => setVerifyCardId(e.target.value)}
-                style={{ flex: 1 }}
-              />
-              <button type="submit">Verify</button>
-            </form>
-            
-            {verifyResult && (
-              <div style={{ marginTop: '1.5rem', padding: '1rem', borderRadius: '8px', 
-                backgroundColor: verifyResult.isWinner ? 'var(--success-bg)' : (verifyResult.error ? '#fee2e2' : '#fef2f2'),
-                color: verifyResult.isWinner ? 'var(--success)' : 'var(--danger)',
-                textAlign: 'center', fontWeight: 'bold', fontSize: '1.5rem',
-                display: 'flex', flexDirection: 'column', gap: '1rem'
-              }}>
-                <div>{verifyResult.error ? `Error: ${verifyResult.error}` : (verifyResult.isWinner ? "🎉 WINNER! 🎉" : "❌ INVALID BINGO ❌")}</div>
-                {!verifyResult.error && (
-                  <button onClick={closeVerification} style={{ backgroundColor: '#444', color: 'white', padding: '10px', fontSize: '1rem', alignSelf: 'center', cursor: 'pointer' }}>
-                    Close TV Verification
-                  </button>
+                    )}
+                  </div>
                 )}
               </div>
-            )}
+
+              <div className="card">
+                <h2>Called Numbers ({calledNumbers.length})</h2>
+                <div className="number-history" style={{ marginTop: '1rem' }}>
+                  {calledNumbers.map(num => (
+                    <div key={num} className="history-pill">
+                      {num}
+                      <button onClick={() => handleRemove(num)} title="Remove">×</button>
+                    </div>
+                  ))}
+                  {calledNumbers.length === 0 && <span style={{ color: 'var(--border-color)' }}>No numbers called yet.</span>}
+                </div>
+              </div>
+            </div>
           </div>
         </>
       )}
