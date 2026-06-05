@@ -33,6 +33,7 @@ loaded_status, loaded_pattern, loaded_numbers = load_game_state()
 called_numbers = loaded_numbers # keep as list to preserve chronological order for the client
 current_pattern = loaded_pattern
 game_status = loaded_status
+global_theme = "light"
 
 cards = {}
 
@@ -79,6 +80,12 @@ def verify_card():
         
     is_winner = check_pattern(cards[card_id], set(called_numbers), pattern)
     
+    socketio.emit('show_verification', {
+        'card_id': card_id,
+        'is_winner': is_winner,
+        'card_data': cards[card_id]
+    })
+    
     return jsonify({
         "success": True,
         "is_winner": is_winner,
@@ -94,9 +101,16 @@ def emit_state():
     })
 
 @socketio.on('connect')
-def handle_connect():
+def handle_connect(auth=None):
     print("Client connected")
     emit_state()
+    socketio.emit('theme_sync', {'theme': global_theme})
+
+@socketio.on('set_theme')
+def handle_set_theme(data):
+    global global_theme
+    global_theme = data.get('theme', 'light')
+    socketio.emit('theme_sync', {'theme': global_theme})
 
 @socketio.on('start_game')
 def handle_start_game():
@@ -124,6 +138,10 @@ def handle_remove_number(data):
         remove_called_number(number)
         print(f"Number removed: {number}")
         socketio.emit('number_removed', {'number': number})
+
+@socketio.on('hide_verification')
+def handle_hide_verification():
+    socketio.emit('hide_verification')
 
 @socketio.on('reset_game')
 def handle_reset_game():
@@ -158,5 +176,5 @@ def serve(path):
         return "React frontend is not built yet. Please build it first."
 
 if __name__ == '__main__':
-    print("Starting Local Bingo server on http://0.0.0.0:5000")
-    socketio.run(app, host='0.0.0.0', port=5000, debug=True)
+    print("Starting Local Bingo server on http://127.0.0.1:5000")
+    socketio.run(app, host='127.0.0.1', port=5000, debug=True)

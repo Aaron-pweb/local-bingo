@@ -15,6 +15,7 @@ export default function CallerDashboard({ toggleTheme, theme }) {
   const [verifyResult, setVerifyResult] = useState(null);
 
   useEffect(() => {
+    document.title = "Bingo Game Controller";
     if (!localStorage.getItem('bingo_auth')) {
       navigate('/login');
       return;
@@ -61,6 +62,11 @@ export default function CallerDashboard({ toggleTheme, theme }) {
     socket.emit('start_game');
   };
 
+  const closeVerification = () => {
+    socket.emit('hide_verification');
+    setVerifyResult(null);
+  };
+
   const handleVerify = async (e) => {
     e.preventDefault();
     setVerifyResult(null);
@@ -100,7 +106,7 @@ export default function CallerDashboard({ toggleTheme, theme }) {
       <div className="header">
         <h1>Bingo Caller Dashboard</h1>
         <button onClick={toggleTheme}>
-          {theme === 'light' ? '🌙 Dark Mode' : '☀️ Light Mode'}
+          {theme === 'light' ? 'Dark Mode' : 'Light Mode'}
         </button>
       </div>
 
@@ -143,19 +149,26 @@ export default function CallerDashboard({ toggleTheme, theme }) {
           </div>
 
           <div className="card">
-            <h2>Call Number</h2>
-            <form onSubmit={handleCall} style={{ display: 'flex', gap: '10px', marginTop: '1rem' }}>
-              <input
-                type="number"
-                min="1"
-                max="75"
-                placeholder="Enter number (1-75)"
-                value={inputNumber}
-                onChange={(e) => setInputNumber(e.target.value)}
-                style={{ flex: 1 }}
-              />
-              <button type="submit">Call</button>
-            </form>
+            <h2>Call Number Board</h2>
+            <div className="caller-grid-container">
+              {['B', 'I', 'N', 'G', 'O'].map((letter, rowIdx) => (
+                <div key={letter} className="caller-grid-row">
+                  <div className={`caller-row-header row-${letter.toLowerCase()}`}>{letter}</div>
+                  {Array.from({ length: 15 }, (_, i) => i + 1 + (rowIdx * 15)).map(num => {
+                    const isCalled = calledNumbers.includes(num);
+                    return (
+                      <button
+                        key={num}
+                        className={`caller-btn ${isCalled ? 'called col-' + letter.toLowerCase() : ''}`}
+                        onClick={() => { if (!isCalled) socket.emit('call_number', { number: num }); }}
+                      >
+                        {num}
+                      </button>
+                    );
+                  })}
+                </div>
+              ))}
+            </div>
           </div>
 
           <div className="card">
@@ -175,8 +188,8 @@ export default function CallerDashboard({ toggleTheme, theme }) {
             <h2>Verify Card</h2>
             <form onSubmit={handleVerify} style={{ display: 'flex', gap: '10px', marginTop: '1rem', alignItems: 'center' }}>
               <input
-                type="text"
-                placeholder="Card ID (e.g., card_001)"
+                type="number"
+                placeholder="Card Number (e.g., 125)"
                 value={verifyCardId}
                 onChange={(e) => setVerifyCardId(e.target.value)}
                 style={{ flex: 1 }}
@@ -188,14 +201,29 @@ export default function CallerDashboard({ toggleTheme, theme }) {
               <div style={{ marginTop: '1.5rem', padding: '1rem', borderRadius: '8px', 
                 backgroundColor: verifyResult.isWinner ? 'var(--success-bg)' : (verifyResult.error ? '#fee2e2' : '#fef2f2'),
                 color: verifyResult.isWinner ? 'var(--success)' : 'var(--danger)',
-                textAlign: 'center', fontWeight: 'bold', fontSize: '1.5rem'
+                textAlign: 'center', fontWeight: 'bold', fontSize: '1.5rem',
+                display: 'flex', flexDirection: 'column', gap: '1rem'
               }}>
-                {verifyResult.error ? `Error: ${verifyResult.error}` : (verifyResult.isWinner ? "🎉 WINNER! 🎉" : "❌ INVALID BINGO ❌")}
+                <div>{verifyResult.error ? `Error: ${verifyResult.error}` : (verifyResult.isWinner ? "🎉 WINNER! 🎉" : "❌ INVALID BINGO ❌")}</div>
+                {!verifyResult.error && (
+                  <button onClick={closeVerification} style={{ backgroundColor: '#444', color: 'white', padding: '10px', fontSize: '1rem', alignSelf: 'center', cursor: 'pointer' }}>
+                    Close TV Verification
+                  </button>
+                )}
               </div>
             )}
           </div>
         </>
       )}
+
+      <footer style={{ position: 'fixed', bottom: '10px', right: '15px', fontSize: '0.85rem', color: '#000', opacity: 0.7, zIndex: 100 }}>
+        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+          <span style={{ fontWeight: 'bold' }}>Developed By:</span>
+          <a href="https://t.me/Aaron_web" target="_blank" rel="noopener noreferrer" style={{ color: '#000', textDecoration: 'none', fontWeight: 'bold' }}>Aaron (@Aaron_web)</a>
+          <span>|</span>
+          <a href="https://t.me/Biniam_199" target="_blank" rel="noopener noreferrer" style={{ color: '#000', textDecoration: 'none', fontWeight: 'bold' }}>Biniam (@Biniam_199)</a>
+        </div>
+      </footer>
     </div>
   );
 }

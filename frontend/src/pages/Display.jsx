@@ -8,14 +8,21 @@ export default function Display() {
   const [latestNumber, setLatestNumber] = useState(null);
   const [currentPattern, setCurrentPattern] = useState('straight_line');
   const [gameStatus, setGameStatus] = useState('waiting');
+  const [verifiedCard, setVerifiedCard] = useState(null);
 
   useEffect(() => {
+    document.title = "Display";
     socket.connect();
     
     const onStateSync = (data) => {
       setCalledNumbers(data.called_numbers);
       if(data.current_pattern) setCurrentPattern(data.current_pattern);
-      if(data.game_status) setGameStatus(data.game_status);
+      if(data.game_status) {
+        setGameStatus(data.game_status);
+        if (data.game_status === 'waiting') {
+          setVerifiedCard(null);
+        }
+      }
       if (data.called_numbers.length > 0) {
         setLatestNumber(data.called_numbers[data.called_numbers.length - 1]);
       } else {
@@ -45,11 +52,15 @@ export default function Display() {
     socket.on('state_sync', onStateSync);
     socket.on('number_called', onNumberCalled);
     socket.on('number_removed', onNumberRemoved);
+    socket.on('show_verification', (data) => setVerifiedCard(data));
+    socket.on('hide_verification', () => setVerifiedCard(null));
 
     return () => {
       socket.off('state_sync', onStateSync);
       socket.off('number_called', onNumberCalled);
       socket.off('number_removed', onNumberRemoved);
+      socket.off('show_verification');
+      socket.off('hide_verification');
       socket.disconnect();
     };
   }, []);
@@ -109,6 +120,37 @@ export default function Display() {
     if (num >= 61 && num <= 75) return 'glow-o';
     return '';
   };
+
+  if (verifiedCard) {
+    const { card_id, is_winner, card_data } = verifiedCard;
+    const columns = ['B', 'I', 'N', 'G', 'O'];
+    return (
+      <div className="verification-overlay">
+        {is_winner ? (
+          <h1 className="winner-banner">🎉 BINGO! WINNER! 🎉</h1>
+        ) : (
+          <h1 className="invalid-banner">❌ INVALID BINGO ❌</h1>
+        )}
+        <h2 style={{ color: 'white', marginBottom: '2rem', fontSize: '3rem' }}>Card #{card_id}</h2>
+        <div className="verified-card-board">
+          {columns.map(col => (
+            <div key={col} className={`bingo-col col-${col.toLowerCase()}`}>
+              <div className="bingo-header">{col}</div>
+              {card_data[col].map((num, idx) => {
+                const isFree = num === "FREE";
+                const isActive = isFree || calledNumbers.includes(num);
+                return (
+                  <div key={idx} className={`bingo-cell ${isActive ? 'active' : ''}`}>
+                    {num}
+                  </div>
+                );
+              })}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   if (gameStatus === 'waiting') {
     return (
