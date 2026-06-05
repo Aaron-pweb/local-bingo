@@ -37,13 +37,24 @@ game_status = loaded_status
 cards = {}
 
 # Load cards
-CARDS_FILE = os.path.join(DATA_DIR, 'cards.json')
+CARDS_FILE = os.path.join(DATA_DIR, 'bingo-card.json')
 if os.path.exists(CARDS_FILE):
     with open(CARDS_FILE, 'r') as f:
-        cards = json.load(f)
-    print(f"Loaded {len(cards)} cards from {CARDS_FILE}")
+        raw_cards = json.load(f)
+        for rc in raw_cards:
+            cid = str(rc.get('cartela_no'))
+            nums = rc.get('bingo_numbers')
+            if nums and len(nums) == 24:
+                cards[cid] = {
+                    "B": [nums[0], nums[5], nums[10], nums[14], nums[19]],
+                    "I": [nums[1], nums[6], nums[11], nums[15], nums[20]],
+                    "N": [nums[2], nums[7], "FREE", nums[16], nums[21]],
+                    "G": [nums[3], nums[8], nums[12], nums[17], nums[22]],
+                    "O": [nums[4], nums[9], nums[13], nums[18], nums[23]]
+                }
+    print(f"Loaded and converted {len(cards)} cards from {CARDS_FILE}")
 else:
-    print(f"WARNING: {CARDS_FILE} not found. Please run data/generate_cards.py.")
+    print(f"WARNING: {CARDS_FILE} not found.")
 
 from bingo_logic import check_pattern
 
